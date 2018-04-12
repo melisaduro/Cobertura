@@ -1,0 +1,516 @@
+Text
+
+
+
+
+
+
+
+
+CREATE FUNCTION [dbo].[fn_lcc_ProbindoorCoverage_new](@RxLEv_out float,@Band varchar(256), @environment varchar(256)='U', @service varchar(256)='voice' )
+
+RETURNS float AS
+
+
+
+BEGIN
+
+
+
+-- exec sys.sp_ms_marksystemobject fn_lcc_ProbindoorCoverage
+
+
+
+ DECLARE @RxLev_offset float
+
+
+
+ DECLARE @alpha float
+
+
+
+ declare @cov_indoor float
+
+
+
+
+
+
+
+ /*
+
+
+
+ Formato del environment:
+
+
+
+ DU  --> Denso Urbano
+
+
+
+ U   --> Urbano
+
+
+
+ SU  --> SubUrbano
+
+
+
+
+
+
+
+ Formato del service (solo afecta a 3G, ya que 2G es voz y 4G datos)
+
+
+
+ 'Voice' --> por defecto
+
+
+
+ 'Data good' --> curvas de datos sin limitacion radio
+
+
+
+ 'Data fair' --> curvas de minimo servicio de datos
+
+
+
+
+
+
+
+ formato bandas en [AGRIDS].dbo.lcc_ref_servingOperator_Freq
+
+
+
+DCS
+
+
+
+EGSM
+
+
+
+GSM
+
+
+
+LTE1800
+
+
+
+LTE2100
+
+
+
+LTE2600
+
+
+
+LTE800
+
+
+
+UMTS2100
+
+
+
+UMTS900
+
+
+
+ */
+
+
+
+  
+
+
+
+   -- alpha value
+
+
+
+  set @alpha=
+
+
+
+case
+
+
+
+	when @band in ('GSM','EGSM') and @environment='DU' then 	12.2	--60.7
+
+
+
+		when @band in ('GSM','EGSM') and @environment='U' then 	12.2	--62.1
+
+
+
+		when @band in ('GSM','EGSM') and @environment='SU' then 	12.2	--63.5
+
+
+
+	when @band='DCS' and @environment='DU' then 	12.2	--56.3
+
+
+
+		when @band='DCS' and @environment='U' then 	12.2	--58.8
+
+
+
+		when @band='DCS' and @environment='SU' then 	12.2	--61.3
+
+
+
+	when @band='UMTS900' and @environment='DU' and @service='Voice' then 	13.2	--74.6
+
+
+
+		when @band='UMTS900' and @environment='U' and @service='Voice'  then 	13.2	--77.1
+
+
+
+		when @band='UMTS900' and @environment='SU' and @service='Voice'  then 	13.2	--79.6
+
+
+
+	when @band='UMTS2100' and @environment='DU' and @service='Voice'  then 	13.2	--72.4
+
+
+
+		when @band='UMTS2100' and @environment='U' and @service='Voice'  then 	13.2	--73.8
+
+
+
+		when @band='UMTS2100' and @environment='SU' and @service='Voice'  then 	13.2	--75.2
+
+
+
+--Data good
+
+
+
+when @band='UMTS900' and @environment='DU' and @service='Data good'  then	13.2	--68
+
+
+
+		when @band='UMTS900' and @environment='U' and @service='Data good'  then	13.2	--70.5
+
+
+
+		when @band='UMTS900' and @environment='SU' and @service='Data good'  then	13.2	--73
+
+
+
+	when @band='UMTS2100' and @environment='DU' and @service='Data good'  then	13.2	--65.8
+
+
+
+		when @band='UMTS2100' and @environment='U' and @service='Data good'  then	13.2	--67.2
+
+
+
+		when @band='UMTS2100' and @environment='SU' and @service='Data good'  then	13.2	--68.6
+
+
+
+--Data Fair	
+
+
+
+when @band='UMTS900' and @environment='DU' and @service='Data fair'  then	13.2	--79.6
+
+
+
+		when @band='UMTS900' and @environment='U' and @service='Data fair'  then	13.2	--82.1
+
+
+
+		when @band='UMTS900' and @environment='SU' and @service='Data fair'  then	13.2	--84.6
+
+
+
+	when @band='UMTS2100' and @environment='DU' and @service='Data fair'  then	13.2	--78.7
+
+
+
+		when @band='UMTS2100' and @environment='U' and @service='Data fair'  then	13.2	--80.1
+
+
+
+		when @band='UMTS2100' and @environment='SU' and @service='Data fair'  then	13.2	--81.5
+
+
+
+when @band='LTE800' and @environment='DU' then 	8	--106.4
+
+
+
+		when @band='LTE800' and @environment='U' then 	8	--108.9
+
+
+
+		when @band='LTE800' and @environment='SU' then 	8	--111.4
+
+
+
+	when @band='LTE1800' and @environment='DU' then 	8.9	--108.6
+
+
+
+		when @band='LTE1800' and @environment='U' then 	8.9	--110
+
+
+
+		when @band='LTE1800' and @environment='SU' then 	8.9	--111.4
+
+
+
+	when @band='LTE2100' and @environment='DU' then 	8.9	--108.6
+
+
+
+		when @band='LTE2100' and @environment='U' then 	8.9	--110
+
+
+
+		when @band='LTE2100' and @environment='SU' then 	8.9	--111.4
+
+
+
+	when @band='LTE2600' and @environment='DU' then 	8.9	--108.6
+
+
+
+		when @band='LTE2600' and @environment='U' then 	8.9	--110
+
+
+
+		when @band='LTE2600' and @environment='SU' then 	8.9	--111.4
+
+
+
+
+
+
+
+end
+
+
+
+-------------------
+
+
+
+ -- offset value
+
+
+
+  set @RxLev_offset=
+
+
+
+case
+
+
+
+	when @band in ('GSM','EGSM') and @environment='DU' then 	-60.7
+
+
+
+		when @band in ('GSM','EGSM') and @environment='U' then 	-62.1
+
+
+
+		when @band in ('GSM','EGSM') and @environment='SU' then 	-63.5
+
+
+
+	when @band='DCS' and @environment='DU' then 	-56.3
+
+
+
+		when @band='DCS' and @environment='U' then 	-58.8
+
+
+
+		when @band='DCS' and @environment='SU' then 	-61.3
+
+
+
+	when @band='UMTS900' and @environment='DU' and @service='Voice' then 	-74.6
+
+
+
+		when @band='UMTS900' and @environment='U' and @service='Voice'  then 	-77.1
+
+
+
+		when @band='UMTS900' and @environment='SU' and @service='Voice'  then 	-79.6
+
+
+
+	when @band='UMTS2100' and @environment='DU' and @service='Voice'  then 	-72.4
+
+
+
+		when @band='UMTS2100' and @environment='U' and @service='Voice'  then 	-73.8
+
+
+
+		when @band='UMTS2100' and @environment='SU' and @service='Voice'  then 	-75.2
+
+
+
+--Data good
+
+
+
+when @band='UMTS900' and @environment='DU' and @service='Data good'  then	-68
+
+
+
+		when @band='UMTS900' and @environment='U' and @service='Data good'  then	-70.5
+
+
+
+		when @band='UMTS900' and @environment='SU' and @service='Data good'  then	-73
+
+
+
+	when @band='UMTS2100' and @environment='DU' and @service='Data good'  then	-65.8
+
+
+
+		when @band='UMTS2100' and @environment='U' and @service='Data good'  then	-67.2
+
+
+
+		when @band='UMTS2100' and @environment='SU' and @service='Data good'  then	-68.6
+
+
+
+--Data Fair	
+
+
+
+when @band='UMTS900' and @environment='DU' and @service='Data fair'  then	-79.6
+
+
+
+		when @band='UMTS900' and @environment='U' and @service='Data fair'  then	-82.1
+
+
+
+		when @band='UMTS900' and @environment='SU' and @service='Data fair'  then	-84.6
+
+
+
+	when @band='UMTS2100' and @environment='DU' and @service='Data fair'  then	-78.7
+
+
+
+		when @band='UMTS2100' and @environment='U' and @service='Data fair'  then	-80.1
+
+
+
+		when @band='UMTS2100' and @environment='SU' and @service='Data fair'  then	-81.5
+
+
+
+when @band='LTE800' and @environment='DU' then 	-99.02
+
+
+
+		when @band='LTE800' and @environment='U' then 	-101.52
+
+
+
+		when @band='LTE800' and @environment='SU' then 	-104.02
+
+
+
+	when @band='LTE1800' and @environment='DU' then 	-97.6
+
+
+
+		when @band='LTE1800' and @environment='U' then 	-99
+
+
+
+		when @band='LTE1800' and @environment='SU' then -100.4
+
+
+
+	when @band='LTE2100' and @environment='DU' then 	-95.6
+
+
+
+		when @band='LTE2100' and @environment='U' then 	-97
+
+
+
+		when @band='LTE2100' and @environment='SU' then 	-98.4
+
+
+
+	when @band='LTE2600' and @environment='DU' then 	-93.6
+
+
+
+		when @band='LTE2600' and @environment='U' then 	-95
+
+
+
+		when @band='LTE2600' and @environment='SU' then 	-96.4
+
+
+
+
+
+
+
+end		
+
+
+
+ 
+
+
+
+  
+
+
+
+   
+
+
+
+ 
+
+
+
+ set @cov_indoor=((1+((EXP((@RxLEv_out-(@RxLev_offset))/@alpha)-EXP(-(@RxLEv_out-(@RxLev_offset))/@alpha))/(EXP((@RxLEv_out-(@RxLev_offset))/@alpha)+EXP(-(@RxLEv_out-(@RxLev_offset))/@alpha))))/2)
+
+
+
+
+
+
+
+  RETURN (@cov_indoor)
+
+
+
+END
+
+
+
+
+
+
+
+
